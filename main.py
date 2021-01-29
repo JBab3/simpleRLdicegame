@@ -1,6 +1,7 @@
 from random import randint
 from random import uniform
 import random
+import numpy as np
 
 
 # constants that set up the RL function
@@ -10,7 +11,7 @@ LOSS_PENALTY = 300
 WIN_REWARD = 30
 EPS_DECAY = 0.9998
 SHOW_EVERY = 2501
-HM_REROLLS = 1
+HM_REROLLS = 3
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
@@ -26,7 +27,7 @@ def main():
     # iii keeps track of the number of rerolls player 2 has spent. The maximum possible is set by HM_REROLLS
     for i in range(0, 6):
         for ii in range(0, 6):
-            for iii in range(0, HM_REROLLS+1):
+            for iii in range(0, HM_REROLLS+2):
                 q_table[i, ii, iii] = [uniform(-5, 0) for i in range(2)]
 
     # print start QTable. Simple test to show the difference before and after the RL has taken place
@@ -42,8 +43,8 @@ def main():
         dice1 = randint(1, 6)
         dice2 = randint(1, 6)
 
-        for rr in range(0, HM_REROLLS):
-            uprr = rr                           # save the number of rerolls use as uprr
+        for rr in range(0, HM_REROLLS+1):
+            uprr = rr                           # save the number of rerolls used as uprr
             obs = (dice1 - 1, dice2 - 1, uprr)
 
             # action chosen
@@ -73,8 +74,12 @@ def main():
 
             # new Q value identified and updated
             # uprr is used to change the correct Q value since rr may have been changed in order to end the loop early
-            new_obs = (dice1-1, dice2-1, uprr)
-            max_future_q = max(q_table[new_obs])
+            if uprr == HM_REROLLS + 1:
+                uprr -= 1
+                max_future_q = 0
+            else:
+                new_obs = (dice1 - 1, dice2 - 1, uprr)
+                max_future_q = max(q_table[new_obs])
             current_q = q_table[obs][action]
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
             q_table[obs][action] = new_q
@@ -83,7 +88,7 @@ def main():
 
         if episode % SHOW_EVERY == 0 and episode != 0:
             print('\nQ-table status on episode number', episode, ':')
-            for jj in range(0, HM_REROLLS):
+            for jj in range(0, HM_REROLLS+1):
                 for j in range(0, 6):
                     print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
                           round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]),
@@ -93,13 +98,24 @@ def main():
                           '|')
 
     print('\nFinal Q-table:')
-    for jj in range(0, HM_REROLLS):
+    for jj in range(0, HM_REROLLS+2):
         for j in range(0, 6):
             print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
                   round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]), '|',
                   round(q_table[j, 3, jj][0]), round(q_table[j, 3, jj][1]), '|', round(q_table[j, 4, jj][0]),
                   round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]), '|')
         print('________')
+
+    staypercent = softmax(q_table[1, 5, 0][0], q_table[1, 5, 0][1])
+    print('\nPercent for stay:', np.around(staypercent*100, decimals=2), '%')
+    staypercent = softmax(q_table[1, 5, 0][1], q_table[1, 5, 0][0])
+    print('\nPercent for reroll:', np.around(staypercent*100, decimals=2), '%')
+    print(q_table[1, 5, 0][0], q_table[1, 5, 0][1])
+
+
+def softmax(x, y):
+    oddsforstay = (np.exp(x) / (np.exp(x) + np.exp(y)))
+    return oddsforstay
 
 
 main()
