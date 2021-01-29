@@ -8,15 +8,15 @@ import numpy as np
 HM_EPISODES = 5000
 ROLL_PENALTY = 1
 LOSS_PENALTY = 300
-WIN_REWARD = 30
+WIN_REWARD = 50
 EPS_DECAY = 0.9998
-SHOW_EVERY = 2501
-HM_REROLLS = 3
+SHOW_EVERY = 3000
+HM_ROLLS = 0
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
 
-# table that holds the Q-values and therefore decides what the 2nd player will do
+# table that holds the Q-values and therefore decides what the player will do
 q_table = {}
 
 
@@ -24,10 +24,10 @@ def main():
     epsilon = 0.9
 
     # create Qtable consisting of random Q-values. i indicates the number player 1 rolled.ii the number player 2 rolled.
-    # iii keeps track of the number of rerolls player 2 has spent. The maximum possible is set by HM_REROLLS
+    # iii keeps track of the number of rerolls player 2 has spent. The maximum possible is set by HM_ROLLS
     for i in range(0, 6):
         for ii in range(0, 6):
-            for iii in range(0, HM_REROLLS+2):
+            for iii in range(0, HM_ROLLS+1):
                 q_table[i, ii, iii] = [uniform(-5, 0) for i in range(2)]
 
     # print start QTable. Simple test to show the difference before and after the RL has taken place
@@ -43,9 +43,9 @@ def main():
         dice1 = randint(1, 6)
         dice2 = randint(1, 6)
 
-        for rr in range(0, HM_REROLLS+1):
-            uprr = rr                           # save the number of rerolls used as uprr
-            obs = (dice1 - 1, dice2 - 1, uprr)
+        for r in range(0, HM_ROLLS+1):
+            # r indicates the number of rolls used by the player
+            obs = (dice1 - 1, dice2 - 1, r)
 
             # action chosen
             if random.random() > epsilon:
@@ -55,16 +55,13 @@ def main():
                     action = 1
             else:
                 action = randint(0, 1)
-            if action == 0:
-                rr = HM_REROLLS+1               # this ends the loop, but still allows for the action to be executed
 
             # action executed
             if action == 1:
-                uprr += 1
                 dice2 = randint(1, 6)
 
             # reward identified
-            if rr == HM_REROLLS+1:
+            if r == HM_ROLLS or action == 0:
                 if dice1 > dice2:
                     reward = -LOSS_PENALTY
                 else:
@@ -73,22 +70,24 @@ def main():
                 reward = -ROLL_PENALTY
 
             # new Q value identified and updated
-            # uprr is used to change the correct Q value since rr may have been changed in order to end the loop early
-            if uprr == HM_REROLLS + 1:
-                uprr -= 1
+            # the future_q value is set to 0 if the player chose to stay or has reached the max. number of rolls allowed
+            if r >= HM_ROLLS or action == 0:
                 max_future_q = 0
             else:
-                new_obs = (dice1 - 1, dice2 - 1, uprr)
+                new_obs = (dice1 - 1, dice2 - 1, r+1)
                 max_future_q = max(q_table[new_obs])
             current_q = q_table[obs][action]
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
             q_table[obs][action] = new_q
 
+            if action == 0:
+                break               # this ends the loop, but if the player chose to stay
+
         epsilon *= EPS_DECAY
 
         if episode % SHOW_EVERY == 0 and episode != 0:
             print('\nQ-table status on episode number', episode, ':')
-            for jj in range(0, HM_REROLLS+1):
+            for jj in range(0, HM_ROLLS+1):
                 for j in range(0, 6):
                     print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
                           round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]),
@@ -97,8 +96,9 @@ def main():
                           round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]),
                           '|')
 
+
     print('\nFinal Q-table:')
-    for jj in range(0, HM_REROLLS+2):
+    for jj in range(0, HM_ROLLS+1):
         for j in range(0, 6):
             print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
                   round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]), '|',
@@ -116,6 +116,13 @@ def main():
 def softmax(x, y):
     oddsforstay = (np.exp(x) / (np.exp(x) + np.exp(y)))
     return oddsforstay
+
+
+def get_avg_max_future_q(qtable, dice1, r):
+    avg_max_future_q = 0
+    for i in range(6):
+        avg_max_future_q += max(qtable[dice1, i, r+1]) / 6
+    return avg_max_future_q
 
 
 main()
