@@ -45,3 +45,4 @@ One could save time and computer memory by using the same Q-table for every situ
 
 I decided not to do this here, because this program was only a test for a different dice game that I play to work on after this project is finished.
 In that the player will also get several choices, however in that game several different Q-tables will be necessary as there are more different situations that require individual decision-making.
+
