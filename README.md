@@ -24,4 +24,4 @@ In order to adress this the max_future_q variable is changed based not on the ma
 
 In order to test wether or not the algorithm is improving the players performance needs to be tracked. This is done through tracking the winrate. Below is a graph showing the winrate of the player over the first 1000 episodes of training:
 
-[1k Eps](docs/1kEps100kGames.png)
+![1k Eps](docs/1kEps100kGames.png)
