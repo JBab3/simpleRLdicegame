@@ -34,4 +34,4 @@ Die Siegesrate bleibt bei 74,5%, fluktuiert jedoch nach wie vor. Da das Programm
 
 In diesem Code ist es möglich die Anzahl der Würfe, die dem Spieler zur verfügung stehen, zu ändern. Dabei werde zusätzlich Q-table erstellt. Es wäre einfacher den Selben Q-table für jede Situation zu verwenden, da die richtige Entscheidung unabhängig von der Anzahl der verbleibenden Würfe ist. Dies würde auch die Trainingsgeschwindigkeit verbessern und Memory sparen.
 
-Die zusätzlichen Q-table hier dienen als eine Art Machbarkeitsnachweis: In einem zukünftigen Projekt werde ich ein anderes Würfelspiel behandeln, dessen Regel deutlich komplexer sind und deswegen mehrere verschieden Q-table benötigen.
+Die zusätzlichen Q-table hier dienen als eine Art Machbarkeitsnachweis: In einem zukünftigen Projekt werde ich ein anderes Würfelspiel behandeln, dessen Regel deutlich komplexer sind und deswegen mehrere verschieden Q-table benötigen. Die zusätzlichen Q-table, die in diesem Programm erstellt werden, zeigen, dass dies möglich ist.
