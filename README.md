@@ -17,5 +17,5 @@ Most enviorments in which Qlearning is applied are strictly deterministic, meani
 The Qlearning algorithm however relies on knowing the Qvalues of future actions when evaluating how good an action is. Since the outcome of each action is random the algorithm needs to be adjusted. 
 If the unchanged algorithm is apllied to this enviorment the Qvalue will be calculated based on the assumption that the player can pick what number is rolled. This of course is false.
 
-In order to adress this the max_future_q variable is changed based not on the maximum Q value of best future game state, but instead of the averge Q value of all possible states. This is done through the function called 'get_avg_max_future_q'.
+In order to adress this the max_future_q variable is changed based not on the maximum Q value of the best future game state, but instead of the averge Q value of all possible states. This is done through the function called 'get_avg_max_future_q'.
 

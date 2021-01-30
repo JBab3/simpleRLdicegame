@@ -2,19 +2,25 @@ from random import randint
 from random import uniform
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # constants that set up the RL function
-HM_EPISODES = 5000
+HM_EPISODES = 2001
 ROLL_PENALTY = 1
 LOSS_PENALTY = 300
 WIN_REWARD = 50
-EPS_DECAY = 0.9998
-SHOW_EVERY = 3000
+EPS_DECAY = 0.99998
 HM_ROLLS = 0
+SHOW_EVERY = 5000000
+PRINT_FINAL_QT = True
+PRINT_START_QT = False
+EVALUATE = True
+EVALUATE_EVERY = 100
+EVALUATION_GAMES = 1000
 
 LEARNING_RATE = 0.1
-DISCOUNT = 0.95
+DISCOUNT = 0.9
 
 # table that holds the Q-values and therefore decides what the player will do
 q_table = {}
@@ -22,21 +28,25 @@ q_table = {}
 
 def main():
     epsilon = 0.9
+    eval_number = 0
+    winrates = []
+    episode_numbers = []
 
-    # create Qtable consisting of random Q-values. i indicates the number player 1 rolled.ii the number player 2 rolled.
-    # iii keeps track of the number of rerolls player 2 has spent. The maximum possible is set by HM_ROLLS
+    # create Qtable consisting of random Q-values. i and ii cycle through the possible rolls 1-6 on both dice.
+    # iii keeps track of the number of rerolls the player has spent. The maximum possible is set by HM_ROLLS
     for i in range(0, 6):
         for ii in range(0, 6):
             for iii in range(0, HM_ROLLS+1):
                 q_table[i, ii, iii] = [uniform(-5, 0) for i in range(2)]
 
     # print start QTable. Simple test to show the difference before and after the RL has taken place
-    print('\nQ-table after initialisation:')
-    for j in range(0, 6):
-        print(round(q_table[j, 0, 0][0]), round(q_table[j, 0, 0][1]), '|', round(q_table[j, 1, 0][0]),
-              round(q_table[j, 1, 0][1]), '|', round(q_table[j, 2, 0][0]), round(q_table[j, 2, 0][1]), '|',
-              round(q_table[j, 3, 0][0]), round(q_table[j, 3, 0][1]), '|', round(q_table[j, 4, 0][0]),
-              round(q_table[j, 4, 0][1]), '|', round(q_table[j, 5, 0][0]), round(q_table[j, 5, 0][1]), '|')
+    if PRINT_START_QT:
+        print('\nQ-table after initialisation:')
+        for j in range(0, 6):
+            print(round(q_table[j, 0, 0][0]), round(q_table[j, 0, 0][1]), '|', round(q_table[j, 1, 0][0]),
+                  round(q_table[j, 1, 0][1]), '|', round(q_table[j, 2, 0][0]), round(q_table[j, 2, 0][1]), '|',
+                  round(q_table[j, 3, 0][0]), round(q_table[j, 3, 0][1]), '|', round(q_table[j, 4, 0][0]),
+                  round(q_table[j, 4, 0][1]), '|', round(q_table[j, 5, 0][0]), round(q_table[j, 5, 0][1]), '|')
 
     # start learning
     for episode in range(HM_EPISODES):
@@ -62,10 +72,10 @@ def main():
 
             # reward identified
             if r == HM_ROLLS or action == 0:
-                if dice1 > dice2:
-                    reward = -LOSS_PENALTY
-                else:
+                if dice2 >= dice1:
                     reward = WIN_REWARD
+                else:
+                    reward = -LOSS_PENALTY
             else:
                 reward = -ROLL_PENALTY
 
@@ -85,6 +95,7 @@ def main():
 
         epsilon *= EPS_DECAY
 
+        # printing the Q-table every SHOW_EVERY episodes to check on the progress.
         if episode % SHOW_EVERY == 0 and episode != 0:
             print('\nQ-table status on episode number', episode, ':')
             for jj in range(0, HM_ROLLS+1):
@@ -96,21 +107,42 @@ def main():
                           round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]),
                           '|')
 
+        # evaluate the performance of the current Q-Table by having the player play eval. games and tracking the wins
+        if EVALUATE and episode % EVALUATE_EVERY == 0:
+            eval_number += 1
+            wins = 0
+            for i in range(EVALUATION_GAMES):
+                eval_dice1 = randint(0, 5)
+                eval_dice2 = randint(0, 5)
+                for ii in range(0, HM_ROLLS+1):
+                    if softmax(q_table[eval_dice1, eval_dice2, ii][0], q_table[eval_dice1, eval_dice2, ii][1]) \
+                            <= random.uniform(0, 1):
+                        eval_dice2 = randint(0, 5)
+                if eval_dice2 >= eval_dice1:
+                    wins += 1
+            if episode % (EVALUATE_EVERY*10) == 0:
+                print('Win%:', wins*100/EVALUATION_GAMES, '| Episode:', episode, '| Eval Nr.', eval_number-1,
+                      '| epsilon:', epsilon)
 
-    print('\nFinal Q-table:')
-    for jj in range(0, HM_ROLLS+1):
-        for j in range(0, 6):
-            print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
-                  round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]), '|',
-                  round(q_table[j, 3, jj][0]), round(q_table[j, 3, jj][1]), '|', round(q_table[j, 4, jj][0]),
-                  round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]), '|')
-        print('________')
+            # save the performance in this array to plot it after training
+            episode_numbers.append(episode)
+            winrates.append(wins*100/EVALUATION_GAMES)
+    if PRINT_FINAL_QT:
+        print('\nFinal Q-table:')
+        for jj in range(0, HM_ROLLS+1):
+            for j in range(0, 6):
+                print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
+                      round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]), '|',
+                      round(q_table[j, 3, jj][0]), round(q_table[j, 3, jj][1]), '|', round(q_table[j, 4, jj][0]),
+                      round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]), '|')
+            print('________')
 
-    staypercent = softmax(q_table[1, 5, 0][0], q_table[1, 5, 0][1])
-    print('\nPercent for stay:', np.around(staypercent*100, decimals=2), '%')
-    staypercent = softmax(q_table[1, 5, 0][1], q_table[1, 5, 0][0])
-    print('\nPercent for reroll:', np.around(staypercent*100, decimals=2), '%')
-    print(q_table[1, 5, 0][0], q_table[1, 5, 0][1])
+    plt.plot(episode_numbers, winrates)
+    plt.xlabel('Episode No.')
+    plt.ylabel('winrate in %')
+    title = 'Player winrate at ' + str(HM_EPISODES) + ' episodes, ' + str(EVALUATION_GAMES) + ' evaluation games.'
+    plt.title(title)
+    plt.show()
 
 
 def softmax(x, y):
