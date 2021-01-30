@@ -1,4 +1,4 @@
-# A simple reinforcement learning dice-game
+# Reinforcement learning apllied to a simple dice-game
 A very simple reinforcement learning program designed to show that I applied the RL-algorithm to my own environment correctly
 and to find out how well reinforcement learning handles stochastic outcomes when it comes to making decisions and awarding rewards.
 
@@ -7,7 +7,7 @@ The game works as follows: a dice is cast showing a random number 1-6. The playe
 The goal for the player is to roll a higher number than the first one. If the numbers are tied the player wins.
 
 A reinforcement learning program should be able to figure out that rerolling is the right decision when the players number is lower than the one on the first dice
-and that not rerolling is correct when the player is allready winning.
+and that not rerolling is correct when the player is already winning.
 
 
 ## Stochastic outcomes in Q-learning
@@ -32,7 +32,7 @@ Overall the win rate appears to be improving steadily. This is exactly what I wa
 There is still a lot of fluctuation both during the early training and around the 74.5% winrate mark that is the best possible avg. that is achievable. This might just be caused by the randomness inherent in a dice game, but it could also be caused by a bug.
 In order to further investigate I evaluated the game for a much larger number of episodes:
 
-![1k Eps](docs/200kEps75kGames.png)
+![200k Eps](docs/200kEps75kGames.png)
 
 The winrate stays near the 74.5%-mark, while still fluctuating. As this program was only designed to test whether or not RL can handle stochastic outcomes I am very happy with this outcome.
 It appears that it should be possible to apply this technique to a more complex dice game, which is what had been my intention for after this project is finished.
@@ -41,8 +41,8 @@ It appears that it should be possible to apply this technique to a more complex 
 #### Sidenote:
 
 It is possible to change the number of rolls a player has to win. If this is used the code creates several Q-tables and trains each one separately. This is technically unnecessary as each Q-table is applied to the same situation.
-One could save time and computer memory by using the same Q-table for every situation. This would also increase the rate at which the player's performance improves.
+One could save time and memory by using the same Q-table for every situation. This would also increase the rate at which the player's performance improves.
 
-I decided not to do this here, because this program was only a test for a different dice game that I play to work on after this project is finished.
-In that the player will also get several choices, however in that game several different Q-tables will be necessary as there are more different situations that require individual decision-making.
+I decided not to do this here, because this program was only a kind of "proof of concept" for a different dice game that I plan to work on after this project is finished.
+In that the player will also get several choices, however these require several different Q-tables as there are more different situations that require individual decision-making.
 
