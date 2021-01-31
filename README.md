@@ -1,4 +1,4 @@
-# Reinforcement learning apllied to a simple dice-game
+# Reinforcement learning applied to a simple dice-game
 A very simple reinforcement learning program designed to show that I applied the RL-algorithm to my own environment correctly
 and to find out how well reinforcement learning handles stochastic outcomes when it comes to making decisions and awarding rewards.
 
