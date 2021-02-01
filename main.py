@@ -6,18 +6,19 @@ import matplotlib.pyplot as plt
 
 
 # constants that set up the RL function
-HM_EPISODES = 2001
+HM_EPISODES = 1001
 ROLL_PENALTY = 1
 LOSS_PENALTY = 300
 WIN_REWARD = 50
-EPS_DECAY = 0.99998
-HM_ROLLS = 0
+EPS_DECAY = 0.9999998
+HM_ROLLS = 10
 SHOW_EVERY = 5000000
+
 PRINT_FINAL_QT = True
 PRINT_START_QT = False
 EVALUATE = True
-EVALUATE_EVERY = 100
-EVALUATION_GAMES = 1000
+EVALUATE_EVERY = 1
+EVALUATION_GAMES = 100
 
 LEARNING_RATE = 0.1
 DISCOUNT = 0.9
@@ -42,11 +43,7 @@ def main():
     # print start QTable. Simple test to show the difference before and after the RL has taken place
     if PRINT_START_QT:
         print('\nQ-table after initialisation:')
-        for j in range(0, 6):
-            print(round(q_table[j, 0, 0][0]), round(q_table[j, 0, 0][1]), '|', round(q_table[j, 1, 0][0]),
-                  round(q_table[j, 1, 0][1]), '|', round(q_table[j, 2, 0][0]), round(q_table[j, 2, 0][1]), '|',
-                  round(q_table[j, 3, 0][0]), round(q_table[j, 3, 0][1]), '|', round(q_table[j, 4, 0][0]),
-                  round(q_table[j, 4, 0][1]), '|', round(q_table[j, 5, 0][0]), round(q_table[j, 5, 0][1]), '|')
+        print_qtable(q_table)
 
     # start learning
     for episode in range(HM_EPISODES):
@@ -84,28 +81,20 @@ def main():
             if r >= HM_ROLLS or action == 0:
                 max_future_q = 0
             else:
-                new_obs = (dice1 - 1, dice2 - 1, r+1)
-                max_future_q = max(q_table[new_obs])
+                max_future_q = get_avg_max_future_q(q_table, dice1, r)
             current_q = q_table[obs][action]
             new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
             q_table[obs][action] = new_q
 
             if action == 0:
-                break               # this ends the loop, but if the player chose to stay
+                break               # this ends the loop if the player chose to stay
 
         epsilon *= EPS_DECAY
 
         # printing the Q-table every SHOW_EVERY episodes to check on the progress.
         if episode % SHOW_EVERY == 0 and episode != 0:
             print('\nQ-table status on episode number', episode, ':')
-            for jj in range(0, HM_ROLLS+1):
-                for j in range(0, 6):
-                    print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
-                          round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]),
-                          '|',
-                          round(q_table[j, 3, jj][0]), round(q_table[j, 3, jj][1]), '|', round(q_table[j, 4, jj][0]),
-                          round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]),
-                          '|')
+            print_qtable(q_table)
 
         # evaluate the performance of the current Q-Table by having the player play eval. games and tracking the wins
         if EVALUATE and episode % EVALUATE_EVERY == 0:
@@ -129,13 +118,7 @@ def main():
             winrates.append(wins*100/EVALUATION_GAMES)
     if PRINT_FINAL_QT:
         print('\nFinal Q-table:')
-        for jj in range(0, HM_ROLLS+1):
-            for j in range(0, 6):
-                print(round(q_table[j, 0, jj][0]), round(q_table[j, 0, jj][1]), '|', round(q_table[j, 1, jj][0]),
-                      round(q_table[j, 1, jj][1]), '|', round(q_table[j, 2, jj][0]), round(q_table[j, 2, jj][1]), '|',
-                      round(q_table[j, 3, jj][0]), round(q_table[j, 3, jj][1]), '|', round(q_table[j, 4, jj][0]),
-                      round(q_table[j, 4, jj][1]), '|', round(q_table[j, 5, jj][0]), round(q_table[j, 5, jj][1]), '|')
-            print('________')
+        print_qtable(q_table)
 
     plt.plot(episode_numbers, winrates)
     plt.xlabel('Episode No.')
@@ -153,8 +136,18 @@ def softmax(x, y):
 def get_avg_max_future_q(qtable, dice1, r):
     avg_max_future_q = 0
     for i in range(6):
-        avg_max_future_q += max(qtable[dice1, i, r+1]) / 6
+        avg_max_future_q += max(qtable[dice1-1, i, r+1]) / 6
     return avg_max_future_q
+
+
+def print_qtable(qtable):
+    for jj in range(0, HM_ROLLS + 1):
+        for j in range(0, 6):
+            print(round(qtable[j, 0, jj][0]), round(qtable[j, 0, jj][1]), '|', round(qtable[j, 1, jj][0]),
+                  round(qtable[j, 1, jj][1]), '|', round(qtable[j, 2, jj][0]), round(qtable[j, 2, jj][1]), '|',
+                  round(qtable[j, 3, jj][0]), round(qtable[j, 3, jj][1]), '|', round(qtable[j, 4, jj][0]),
+                  round(qtable[j, 4, jj][1]), '|', round(qtable[j, 5, jj][0]), round(qtable[j, 5, jj][1]), '|')
+        print('________')
 
 
 main()
